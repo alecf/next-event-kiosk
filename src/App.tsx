@@ -1,9 +1,11 @@
 import './App.css';
-
+import _ from 'lodash';
+import ago from 's-ago';
 import React, {
   FunctionComponent,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import GoogleLogin, {
@@ -30,13 +32,6 @@ const App: FunctionComponent = () => {
     calendars,
     setCalendars,
   ] = useState<gapi.client.calendar.CalendarList | null>();
-  const [
-    events,
-    setEvents,
-  ] = usePersistentState<gapi.client.calendar.Events | null>(
-    'current_events',
-    null
-  );
   const onSuccess = useCallback(
     (response: GoogleLoginResponse | GoogleLoginResponseOffline) => {
       if (!('tokenId' in response)) {
@@ -80,6 +75,14 @@ const App: FunctionComponent = () => {
     setCalendars(calendars.result);
   }, []);
 
+  const [
+    events,
+    setEvents,
+  ] = usePersistentState<gapi.client.calendar.Events | null>(
+    'current_events',
+    null
+  );
+
   const loadEvents = useCallback(
     async (calendarId: string) => {
       const calendarEvents = await gapi.client.calendar.events.list(
@@ -91,6 +94,40 @@ const App: FunctionComponent = () => {
   );
 
   const time = useCurrentTime();
+
+  const { current, future } = useMemo(() => {
+    const now = time.toISOString();
+
+    const futureEvents =
+      events?.items
+        ?.map((event) => {
+          const { start, end } = event;
+          const startDateTime = start?.dateTime ?? '';
+          const endDateTime = end?.dateTime ?? '';
+          const happeningNow = startDateTime < now && endDateTime > now;
+          const pending = !happeningNow ? startDateTime > now : false;
+          if (!start || !(happeningNow || pending)) {
+            return null;
+          }
+          const secondsLeft =
+            (new Date(startDateTime).valueOf() ?? 0) - time.valueOf();
+          const eventTime = new Date(startDateTime);
+          return {
+            ...event,
+            happeningNow,
+            pending,
+            secondsLeft,
+            ago: ago(eventTime),
+          };
+        })
+        .filter(notEmpty) ?? [];
+    const [current, future] = _.partition(
+      futureEvents,
+      (event) => event.happeningNow
+    );
+    return { current, future };
+  }, [events, time]);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -113,12 +150,34 @@ const App: FunctionComponent = () => {
             ))}
           </ul>
         )}
-        {events && (
-          <ul>
-            {events.items?.map((event) => (
-              <li key={event.id}>{event.summary}</li>
-            ))}
-          </ul>
+        {current && (
+          <div>
+            <h2>Right now</h2>
+
+            <ul>
+              {current.map((event) => (
+                <li key={event.id}>
+                  {event.summary}
+                  {event.happeningNow ? '(now)' : null}
+                  {event.pending ? event.ago : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {future && (
+          <div>
+            <h2>Future</h2>
+            <ul>
+              {future.map((event) => (
+                <li key={event.id}>
+                  {event.summary}
+                  {event.happeningNow ? '(now)' : null}
+                  {event.pending ? event.ago : null}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         <GoogleLogin
           clientId={clientId}
@@ -206,4 +265,7 @@ function makeCalendarListQuery(calendarId: string): any {
     maxResults: 10,
     orderBy: 'startTime',
   };
+}
+function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+  return value !== null && value !== undefined;
 }

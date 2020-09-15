@@ -7,7 +7,6 @@ export function useAnimationFrame(
   const cc = useRef<number>();
   useEffect(() => {
     function doSomething(timestamp: number) {
-      console.log('calling back..');
       callback(timestamp);
       cc.current = undefined;
       setTimeout(() => {
