@@ -1,8 +1,8 @@
-.App {
+.app {
   text-align: center;
 }
 
-.App-logo {
+.logo {
   height: 40vmin;
   pointer-events: none;
 }
@@ -12,8 +12,12 @@
     animation: App-logo-spin infinite 20s linear;
   }
 }
+.time {
+  font-size: 18vh;
+  margin: 0;
+}
 
-.App-header {
+.header {
   background-color: #282c34;
   min-height: 100vh;
   display: flex;
@@ -24,7 +28,7 @@
   color: white;
 }
 
-.App-link {
+.link {
   color: #61dafb;
 }
 
@@ -35,4 +39,8 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.banner {
+  list-style: none;
 }
