@@ -1,6 +1,6 @@
-import './App.css';
+import classNames from 'classnames';
+import { format } from 'date-fns';
 import _ from 'lodash';
-import ago from 's-ago';
 import React, {
   FunctionComponent,
   useCallback,
@@ -10,17 +10,30 @@ import React, {
 } from 'react';
 import GoogleLogin, {
   GoogleLoginResponse,
-  GoogleLogout,
   GoogleLoginResponseOffline,
+  GoogleLogout,
 } from 'react-google-login';
+import ago from 's-ago';
+
+import styles from './App.module.css';
 import { useAnimationFrame } from './useAnimationFrame';
 import { usePersistentState } from './usePersistentState';
 
 const clientId = process.env.REACT_APP_CLIENT_ID ?? '';
 const apiKey = 'AIzaSyD01PlE0xERSwpZQauir8ZisF5e7LuNAbo';
+const ONE_MINUTE = 60;
+const ONE_HOUR = ONE_MINUTE * 60;
 
 const calendarScope =
   'https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/calendar.readonly';
+
+interface CustomEvent extends gapi.client.calendar.Event {
+  happeningNow: boolean;
+  pending: boolean;
+  secondsLeft: number;
+  ago: string;
+}
+
 const App: FunctionComponent = () => {
   const [gapiToken, setGapiToken] = useState(
     window.localStorage.getItem('gapi_token')
@@ -100,24 +113,31 @@ const App: FunctionComponent = () => {
 
     const futureEvents =
       events?.items
-        ?.map((event) => {
+        ?.map((event): CustomEvent | null => {
           const { start, end } = event;
-          const startDateTime = start?.dateTime ?? '';
-          const endDateTime = end?.dateTime ?? '';
-          const happeningNow = startDateTime < now && endDateTime > now;
-          const pending = !happeningNow ? startDateTime > now : false;
-          if (!start || !(happeningNow || pending)) {
+          const eventStart = new Date(start?.dateTime ?? '');
+          const startDateTime = eventStart.toISOString();
+          const eventEnd = new Date(end?.dateTime ?? '');
+          const endDateTime = eventEnd.toISOString();
+
+          const ended = now > endDateTime;
+          if (ended || eventStart.getDay() !== time.getDay()) {
             return null;
           }
-          const secondsLeft =
-            (new Date(startDateTime).valueOf() ?? 0) - time.valueOf();
-          const eventTime = new Date(startDateTime);
+
+          const happeningNow = startDateTime <= now && now < endDateTime;
+          const pending = !happeningNow ? endDateTime > now : false;
+
+          const secondsLeft = Math.floor(
+            (eventEnd.valueOf() - time.valueOf()) / 1000
+          );
+
           return {
             ...event,
             happeningNow,
             pending,
             secondsLeft,
-            ago: ago(eventTime),
+            ago: ago(eventStart),
           };
         })
         .filter(notEmpty) ?? [];
@@ -125,20 +145,21 @@ const App: FunctionComponent = () => {
       futureEvents,
       (event) => event.happeningNow
     );
-    return { current, future };
+    // console.log('current = ', current);
+    // console.log('future = ', future);
+    return { current, future: future.slice(0, 3) };
   }, [events, time]);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>Time will go? here: {time?.toLocaleTimeString()}</p>
+    <div className={styles.app}>
+      <header className={styles.header}>
+        <h1 className={styles.time}>{time?.toLocaleTimeString()}</h1>
         {error && (
           <div>
             Error:{' '}
             <pre style={{ fontSize: '12px' }}>{JSON.stringify(error)}</pre>
           </div>
         )}
-        {user && <div>User: {user.name}</div>}
         {calendars && (
           <ul>
             {calendars.items?.map((calendar) => (
@@ -150,55 +171,54 @@ const App: FunctionComponent = () => {
             ))}
           </ul>
         )}
-        {current && (
+        {!!current?.length && (
           <div>
-            <h2>Right now</h2>
+            <h2 className={styles.timeHeader}>Right now</h2>
 
             <ul>
               {current.map((event) => (
-                <li key={event.id}>
-                  {event.summary}
-                  {event.happeningNow ? '(now)' : null}
-                  {event.pending ? event.ago : null}
-                </li>
+                <EventBanner key={event.id} event={event} />
               ))}
             </ul>
           </div>
         )}
-        {future && (
+        {!!future?.length && (
           <div>
-            <h2>Future</h2>
+            <h2 className={styles.timeHeader}>Coming up</h2>
             <ul>
               {future.map((event) => (
-                <li key={event.id}>
-                  {event.summary}
-                  {event.happeningNow ? '(now)' : null}
-                  {event.pending ? event.ago : null}
-                </li>
+                <EventBanner key={event.id} event={event} />
               ))}
             </ul>
           </div>
         )}
-        <GoogleLogin
-          clientId={clientId}
-          buttonText="Login"
-          render={(renderProps) => (
-            <button {...renderProps} disabled={haveCalendarApi}>
-              Login please
-            </button>
+        <div>
+          {user && <div>User: {user.name}</div>}
+          <GoogleLogin
+            clientId={clientId}
+            buttonText="Login"
+            render={(renderProps) =>
+              user ? (
+                <button {...renderProps} disabled={haveCalendarApi}>
+                  Login please
+                </button>
+              ) : (
+                <span />
+              )
+            }
+            onSuccess={onSuccess}
+            onFailure={onFailure}
+            isSignedIn
+            uxMode="redirect"
+            scope={calendarScope}
+          />
+          {gapiToken && (
+            <GoogleLogout clientId={clientId} onLogoutSuccess={onLogout} />
           )}
-          onSuccess={onSuccess}
-          onFailure={onFailure}
-          isSignedIn
-          uxMode="redirect"
-          scope={calendarScope}
-        />
-        {gapiToken && (
-          <GoogleLogout clientId={clientId} onLogoutSuccess={onLogout} />
-        )}
-        <button onClick={onLoadCalendar} disabled={!haveCalendarApi}>
-          Load calendar
-        </button>
+          <button onClick={onLoadCalendar} disabled={!haveCalendarApi}>
+            Load calendar
+          </button>
+        </div>
       </header>
     </div>
   );
@@ -207,6 +227,29 @@ const App: FunctionComponent = () => {
 export default App;
 
 const loadTime = new Date();
+const EventBanner: FunctionComponent<{ event: CustomEvent }> = ({ event }) => {
+  const colorClass = classNames(
+    {
+      [styles.now]: event.happeningNow,
+      [styles.soon]: event.secondsLeft < ONE_HOUR,
+      [styles.imminent]: event.secondsLeft < 5 * ONE_MINUTE,
+    },
+    styles.banner
+  );
+
+  const start = format(new Date(event.start?.dateTime ?? ''), 'h:mm');
+  const left = ago(new Date(event.end?.dateTime ?? ''));
+  return (
+    <li key={event.id} className={colorClass}>
+      {event.summary} {event.pending ? event.ago : null}
+      {event.pending && ` @ ${start}`}
+      <div className={styles.note}>
+        {event.happeningNow && ` ending ${left}`}
+      </div>
+    </li>
+  );
+};
+
 function useCurrentTime() {
   const [time, setTime] = useState<Date>(loadTime);
   const onFrame = useCallback(() => {
@@ -256,7 +299,8 @@ function retry(fn: () => boolean, timeoutMs = 1000) {
   });
 }
 
-function makeCalendarListQuery(calendarId: string): any {
+function makeCalendarListQuery(calendarId: string) {
+  console.log('filtering by ', new Date().toISOString());
   return {
     calendarId,
     timeMin: new Date().toISOString(),
