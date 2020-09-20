@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "16f616c967068424500e1ca745118a32",
+    "revision": "7da8b35d902bd74ca8f5211fdfd8fd4b",
     "url": "/next-event-kiosk/index.html"
   },
   {
-    "revision": "4f4369521cca47d198c0",
+    "revision": "7ccaba607995f8295625",
     "url": "/next-event-kiosk/static/css/main.526dfbf0.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/next-event-kiosk/static/js/2.89f580ba.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "4f4369521cca47d198c0",
-    "url": "/next-event-kiosk/static/js/main.c7079db0.chunk.js"
+    "revision": "7ccaba607995f8295625",
+    "url": "/next-event-kiosk/static/js/main.827287f2.chunk.js"
   },
   {
     "revision": "8b817f3a317b35302958",
