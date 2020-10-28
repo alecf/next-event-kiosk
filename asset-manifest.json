@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/next-event-kiosk/static/css/main.526dfbf0.chunk.css",
-    "main.js": "/next-event-kiosk/static/js/main.827287f2.chunk.js",
-    "main.js.map": "/next-event-kiosk/static/js/main.827287f2.chunk.js.map",
+    "main.js": "/next-event-kiosk/static/js/main.af436dc9.chunk.js",
+    "main.js.map": "/next-event-kiosk/static/js/main.af436dc9.chunk.js.map",
     "runtime-main.js": "/next-event-kiosk/static/js/runtime-main.1546b395.js",
     "runtime-main.js.map": "/next-event-kiosk/static/js/runtime-main.1546b395.js.map",
-    "static/js/2.89f580ba.chunk.js": "/next-event-kiosk/static/js/2.89f580ba.chunk.js",
-    "static/js/2.89f580ba.chunk.js.map": "/next-event-kiosk/static/js/2.89f580ba.chunk.js.map",
+    "static/js/2.39fa2b94.chunk.js": "/next-event-kiosk/static/js/2.39fa2b94.chunk.js",
+    "static/js/2.39fa2b94.chunk.js.map": "/next-event-kiosk/static/js/2.39fa2b94.chunk.js.map",
     "index.html": "/next-event-kiosk/index.html",
-    "precache-manifest.b0d6833d344907a66d8517859d36a6bd.js": "/next-event-kiosk/precache-manifest.b0d6833d344907a66d8517859d36a6bd.js",
+    "precache-manifest.b2169da202f8e6e7bd44b41b8b663839.js": "/next-event-kiosk/precache-manifest.b2169da202f8e6e7bd44b41b8b663839.js",
     "service-worker.js": "/next-event-kiosk/service-worker.js",
     "static/css/main.526dfbf0.chunk.css.map": "/next-event-kiosk/static/css/main.526dfbf0.chunk.css.map",
-    "static/js/2.89f580ba.chunk.js.LICENSE.txt": "/next-event-kiosk/static/js/2.89f580ba.chunk.js.LICENSE.txt"
+    "static/js/2.39fa2b94.chunk.js.LICENSE.txt": "/next-event-kiosk/static/js/2.39fa2b94.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.1546b395.js",
-    "static/js/2.89f580ba.chunk.js",
+    "static/js/2.39fa2b94.chunk.js",
     "static/css/main.526dfbf0.chunk.css",
-    "static/js/main.827287f2.chunk.js"
+    "static/js/main.af436dc9.chunk.js"
   ]
 }
